@@ -45,6 +45,8 @@ const Jobs: React.FC = () => {
     // Sort by date, newest first
     jobsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setJobs(jobsData);
+    
+    console.log(jobsData.map(job => job.services));
   };
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -285,10 +287,12 @@ const Jobs: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {jobs.map((job) => (
+              {jobs?.map((job) => (
                 <tr key={job.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {format(parseISO(job.date), 'MMM dd, yyyy')}
+                    {format(parseISO(job.date!), 'MMM dd, yyyy')}
+                    
+                    {/* {job.date} */}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {job.customerName}
@@ -297,9 +301,10 @@ const Jobs: React.FC = () => {
                     {job.vehicle}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {job.services.length > 1 
-                      ? `${job.services[0].serviceName} +${job.services.length - 1} more` 
-                      : job.services[0]?.serviceName}
+                    {job.services?.length <1 
+                      // ? `${job.services[0].serviceName} +${job.services.length - 1} more` 
+                      // : 
+                     && job.services[0]?.serviceName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatCurrency(job.totalPrice)}

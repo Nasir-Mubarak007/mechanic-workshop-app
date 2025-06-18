@@ -43,12 +43,12 @@ const Dashboard: React.FC = () => {
     const allServices = getServices();
     setServices(allServices);
     
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = format(new Date(), 'dd-MM-yyyy');
     const allJobs = getJobs();
     
     // Filter jobs for today and for current staff if not admin
     const filteredJobs = isAdmin 
-      ? allJobs.filter(job => job.date.startsWith(today))
+      ? allJobs.filter(job => job.date)
       : user ? getJobsByStaff(user.id).filter(job => job.date.startsWith(today)) : [];
     
     setTodayJobs(filteredJobs);

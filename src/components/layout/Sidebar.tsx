@@ -20,7 +20,7 @@ const Sidebar: React.FC = () => {
       <div className="p-5 border-b border-red-800">
         <div className="flex items-center space-x-3">
           <Wrench size={28} className="text-orange-400" />
-          <span className="font-bold text-xl">MechShop Pro</span>
+          <span className="font-bold text-xl">Vicky Auto Service</span>
         </div>
       </div>
       <nav className="flex-1 pt-5 pb-4 overflow-y-auto">

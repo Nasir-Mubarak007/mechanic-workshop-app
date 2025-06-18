@@ -172,7 +172,7 @@ const JobForm: React.FC = () => {
   };
   
   const calculateTotal = (): number => {
-    return selectedServices.reduce((total, service) => {
+    return selectedServices?.reduce((total, service) => {
       return total + (service.price * service.quantity);
     }, 0);
   };
@@ -307,13 +307,13 @@ const JobForm: React.FC = () => {
                 </Button>
               }
             >
-              {selectedServices.length === 0 ? (
+              {selectedServices?.length === 0 ? (
                 <div className="text-center py-4 text-gray-500">
                   No services added yet. Click "Add Service" to begin.
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {selectedServices.map((service, index) => (
+                  {selectedServices?.map((service, index) => (
                     <div key={index} className="p-4 border rounded-md bg-gray-50">
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
                         <div className="sm:col-span-5">
@@ -505,7 +505,9 @@ const JobForm: React.FC = () => {
                 <div className="pt-4 border-t border-gray-200">
                   <div className="flex justify-between text-sm">
                     <span className="font-medium text-gray-700">Subtotal</span>
-                    <span className="text-gray-900">{formatCurrency(calculateTotal())}</span>
+                    <span className="text-gray-900">
+                      {formatCurrency(calculateTotal())}
+                      </span>
                   </div>
                   
                   <div className="mt-4 flex justify-between text-base">
@@ -523,7 +525,7 @@ const JobForm: React.FC = () => {
                 size="lg"
                 icon={Save}
                 isLoading={loading}
-                disabled={selectedServices.length === 0}
+                disabled={selectedServices?.length === 0}
                 fullWidth
               >
                 {isEditing ? 'Update Job' : 'Create Job'}

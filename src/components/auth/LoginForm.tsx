@@ -35,7 +35,7 @@ const LoginForm: React.FC = () => {
             <Wrench className="h-12 w-12 text-red-700" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            MechShop Pro
+            Vicky Auto Service
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Log in to access your workshop management dashboard
@@ -67,7 +67,7 @@ const LoginForm: React.FC = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
-                  placeholder="admin or staff1"
+                  placeholder="Enter username here"
                 />
               </div>
             </div>
@@ -85,7 +85,7 @@ const LoginForm: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
-                  placeholder="admin123 or staff123"
+                  placeholder="Your Password here"
                 />
               </div>
             </div>
@@ -104,7 +104,7 @@ const LoginForm: React.FC = () => {
             </div>
           </form>
           
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
@@ -127,7 +127,7 @@ const LoginForm: React.FC = () => {
                 <p className="text-xs text-red-700">Password: staff123</p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
