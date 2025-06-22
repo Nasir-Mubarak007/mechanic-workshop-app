@@ -292,7 +292,6 @@ const Jobs: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {format(parseISO(job.date!), 'MMM dd, yyyy')}
                     
-                    {/* {job.date} */}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {job.customerName}
@@ -302,9 +301,9 @@ const Jobs: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {job.services?.length <1 
-                      // ? `${job.services[0].serviceName} +${job.services.length - 1} more` 
-                      // : 
-                     && job.services[0]?.serviceName}
+                      ? `${job.services[0].serviceName} +${job.services.length - 1} more` 
+                      : 
+                      job.services[0]?.serviceName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatCurrency(job.totalPrice)}
@@ -390,6 +389,8 @@ const Jobs: React.FC = () => {
                         <div className="sm:col-span-1">
                           <dt className="text-sm font-medium text-gray-500">Date</dt>
                           <dd className="mt-1 text-sm text-gray-900">{format(parseISO(jobDetails.date), 'MMM dd, yyyy')}</dd>
+                          <dt className="text-sm font-medium text-gray-500 mt-3">Time</dt>
+                          <dd className="mt-1 text-sm text-gray-900">{format(parseISO(jobDetails.date).getTime(), 'HH:mm a')}</dd>
                         </div>
                         <div className="sm:col-span-1">
                           <dt className="text-sm font-medium text-gray-500">Staff</dt>

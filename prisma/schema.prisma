@@ -1,0 +1,62 @@
+
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env(DATABASE_URL) // Set your Neon DB URL in .env
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  jobs      Job[]    @relation("StaffJobs")
+}
+
+model Service {
+  id            String   @id @default(uuid())
+  name          String
+  type          String
+  price         Float
+  estimatedTime Int?
+  isActive      Boolean  @default(true)
+}
+
+model InventoryItem {
+  id           String   @id @default(uuid())
+  itemName     String
+  category     String
+  quantity     Int
+  unit         String
+  threshold    Int
+  pricePerUnit Float
+  lastUpdated  DateTime @default(now())
+}
+
+model Job {
+  id           String   @id @default(uuid())
+  customerName String
+  staffId      String
+  staff        User     @relation("StaffJobs", fields: [staffId], references: [id])
+  date         DateTime
+  status       String
+  consumables  Json?
+}
+
+model ScheduledService {
+  id             String   @id @default(uuid())
+  customerName   String
+  scheduledDate  DateTime
+  serviceId      String
+  status         String   @default("scheduled")
+  createdAt      DateTime @default(now())
+}

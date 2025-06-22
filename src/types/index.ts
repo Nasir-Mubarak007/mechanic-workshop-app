@@ -62,6 +62,7 @@ export interface Job {
   staffId: string;
   staffName: string;
   notes?: string;
+  tax?: number; // Percentage
 }
 
 export type AppointmentStatus = 'scheduled' | 'completed' | 'missed' | 'cancelled';

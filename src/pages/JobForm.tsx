@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  getActiveServices, 
-  addJob, 
-  getJobs, 
-  updateJob, 
-  getAvailableInventoryItems 
+import {
+  getActiveServices,
+  addJob,
+  getJobs,
+  updateJob,
+  getAvailableInventoryItems
 } from '../utils/localStorage';
 import { Service, Job, JobService, JobConsumable, PaymentType, InventoryItem } from '../types';
 import Card from '../components/common/Card';
@@ -19,41 +19,55 @@ const JobForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
-  
+
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [availableInventory, setAvailableInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedServices, setSelectedServices] = useState<JobService[]>([]);
   const [selectedConsumables, setSelectedConsumables] = useState<JobConsumable[]>([]);
-  
+
   const [formData, setFormData] = useState({
     customerName: '',
     vehicle: '',
     paymentType: 'cash' as PaymentType,
     notes: '',
+    othersServiceName: '',
+    othersServicePrice: '',
+    othersConsumableName: '',
+    othersConsumablePrice: '',
+    tax: 0,
   });
-  
+
+
+
+
+
   useEffect(() => {
     // Load available services and inventory
     const services = getActiveServices();
     const inventory = getAvailableInventoryItems();
     setAvailableServices(services);
     setAvailableInventory(inventory);
-    
+
     // If editing, load job data
     if (isEditing && id) {
       const jobs = getJobs();
       const job = jobs.find(j => j.id === id);
-      
+
       if (job) {
         setFormData({
           customerName: job.customerName,
           vehicle: job.vehicle,
           paymentType: job.paymentType,
           notes: job.notes || '',
+          othersServiceName: formData.othersServiceName || '',
+          othersServicePrice: formData.othersServicePrice || '',
+          othersConsumableName: formData.othersConsumableName || '',
+          othersConsumablePrice: formData.othersConsumablePrice || '',
+          tax: job.tax ?? 0,
         });
-        
-        setSelectedServices(job.services);
+
+        setSelectedServices(job.services || []);
         setSelectedConsumables(job.consumables || []);
       } else {
         toast.error('Job not found');
@@ -61,7 +75,7 @@ const JobForm: React.FC = () => {
       }
     }
   }, [id, isEditing, navigate]);
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -69,10 +83,10 @@ const JobForm: React.FC = () => {
       [name]: value,
     }));
   };
-  
+
   const addServiceToJob = () => {
     if (availableServices.length === 0) return;
-    
+
     const firstService = availableServices[0];
     const newService: JobService = {
       serviceId: firstService.id,
@@ -80,42 +94,72 @@ const JobForm: React.FC = () => {
       price: firstService.price,
       quantity: 1,
     };
-    
+
+
     setSelectedServices([...selectedServices, newService]);
   };
-  
+
   const removeServiceFromJob = (index: number) => {
     const updatedServices = [...selectedServices];
     updatedServices.splice(index, 1);
     setSelectedServices(updatedServices);
   };
-  
+
+  // const handleServiceChange = (index: number, field: keyof JobService, value: string | number) => {
+  //   const updatedServices = [...selectedServices];
+
+  //   if (field === 'serviceId') {
+  //     const selectedService = availableServices.find(s => s.id === value);
+  //     if (selectedService) {
+  //       updatedServices[index] = {
+  //         ...updatedServices[index],
+  //         serviceId: selectedService.id,
+  //         serviceName: selectedService.name,
+  //         price: selectedService.price,
+  //       };
+  //     }
+  //   }
+
+  //   else {
+  //     updatedServices[index] = {
+  //       ...updatedServices[index],
+  //       [field]: field === 'quantity' ? Math.max(1, Number(value)) : value,
+  //     };
+  //   }
+
+
+  //   setSelectedServices(updatedServices);
+  // };
+
   const handleServiceChange = (index: number, field: keyof JobService, value: string | number) => {
     const updatedServices = [...selectedServices];
-    
-    if (field === 'serviceId') {
+    const isOthers = updatedServices[index].serviceId === 'others' || value === 'others';
+
+    if (field === 'serviceId' && value !== 'others') {
       const selectedService = availableServices.find(s => s.id === value);
       if (selectedService) {
         updatedServices[index] = {
-          ...updatedServices[index],
           serviceId: selectedService.id,
           serviceName: selectedService.name,
           price: selectedService.price,
+          quantity: 1,
         };
       }
     } else {
       updatedServices[index] = {
         ...updatedServices[index],
-        [field]: field === 'quantity' ? Math.max(1, Number(value)) : value,
+        [field]: field === 'quantity' || field === 'price' ? Number(value) : value,
+        serviceId: isOthers ? 'others' : updatedServices[index].serviceId,
       };
     }
-    
+
     setSelectedServices(updatedServices);
   };
-  
+
+
   const addConsumableToJob = () => {
     if (availableInventory.length === 0) return;
-    
+
     const firstItem = availableInventory[0];
     const newConsumable: JobConsumable = {
       itemId: firstItem.id,
@@ -123,39 +167,64 @@ const JobForm: React.FC = () => {
       quantityUsed: 1,
       unit: firstItem.unit,
     };
-    
+
     setSelectedConsumables([...selectedConsumables, newConsumable]);
   };
-  
+
   const removeConsumableFromJob = (index: number) => {
     const updatedConsumables = [...selectedConsumables];
     updatedConsumables.splice(index, 1);
     setSelectedConsumables(updatedConsumables);
   };
-  
+
+  // const handleConsumableChange = (index: number, field: keyof JobConsumable, value: string | number) => {
+  //   const updatedConsumables = [...selectedConsumables];
+
+  //   if (field === 'itemId') {
+  //     const selectedItem = availableInventory.find(i => i.id === value);
+  //     if (selectedItem) {
+  //       updatedConsumables[index] = {
+  //         ...updatedConsumables[index],
+  //         itemId: selectedItem.id,
+  //         itemName: selectedItem.itemName,
+  //         unit: selectedItem.unit,
+  //       };
+  //     }
+  //   } else {
+  //     updatedConsumables[index] = {
+  //       ...updatedConsumables[index],
+  //       [field]: field === 'quantityUsed' ? Math.max(0.1, Number(value)) : value,
+  //     };
+  //   }
+
+  //   setSelectedConsumables(updatedConsumables);
+  // };
+
   const handleConsumableChange = (index: number, field: keyof JobConsumable, value: string | number) => {
     const updatedConsumables = [...selectedConsumables];
-    
-    if (field === 'itemId') {
+    const isOthers = updatedConsumables[index].itemId === 'others' || value === 'others';
+
+    if (field === 'itemId' && value !== 'others') {
       const selectedItem = availableInventory.find(i => i.id === value);
       if (selectedItem) {
         updatedConsumables[index] = {
-          ...updatedConsumables[index],
           itemId: selectedItem.id,
           itemName: selectedItem.itemName,
           unit: selectedItem.unit,
+          quantityUsed: 1,
         };
       }
     } else {
       updatedConsumables[index] = {
         ...updatedConsumables[index],
         [field]: field === 'quantityUsed' ? Math.max(0.1, Number(value)) : value,
+        itemId: isOthers ? 'others' : updatedConsumables[index].itemId,
       };
     }
-    
+
     setSelectedConsumables(updatedConsumables);
   };
-  
+
   const validateConsumables = (): boolean => {
     for (const consumable of selectedConsumables) {
       const inventoryItem = availableInventory.find(i => i.id === consumable.itemId);
@@ -170,33 +239,36 @@ const JobForm: React.FC = () => {
     }
     return true;
   };
-  
+
   const calculateTotal = (): number => {
-    return selectedServices?.reduce((total, service) => {
-      return total + (service.price * service.quantity);
-    }, 0);
+    const subtotal = selectedServices.reduce((total, service) => total + (service.price * service.quantity), 0);
+    const paymentRequiresTax = formData.paymentType !== 'cash';
+    const taxAmount = paymentRequiresTax ? formData.tax : 0;
+    const Total= subtotal + (subtotal * (taxAmount / 100))  ;
+    return Total
   };
-  
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('You must be logged in to perform this action');
       return;
     }
-    
+
     if (selectedServices.length === 0) {
       toast.error('You must add at least one service');
       return;
     }
-    
+
     // Validate consumables only for new jobs (not when editing)
     if (!isEditing && selectedConsumables.length > 0 && !validateConsumables()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const jobData: Omit<Job, 'id'> = {
         customerName: formData.customerName,
@@ -210,7 +282,7 @@ const JobForm: React.FC = () => {
         staffName: user.name,
         notes: formData.notes,
       };
-      
+
       if (isEditing && id) {
         updateJob({ id, ...jobData });
         toast.success('Job updated successfully');
@@ -218,7 +290,7 @@ const JobForm: React.FC = () => {
         addJob(jobData);
         toast.success('Job created successfully');
       }
-      
+
       navigate('/jobs');
     } catch (error) {
       if (error instanceof Error) {
@@ -230,14 +302,15 @@ const JobForm: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
   };
-  
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -253,7 +326,7 @@ const JobForm: React.FC = () => {
           {isEditing ? 'Edit Job' : 'Create New Job'}
         </h1>
       </div>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
@@ -273,7 +346,7 @@ const JobForm: React.FC = () => {
                     className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="vehicle" className="block text-sm font-medium text-gray-700">
                     Vehicle *
@@ -291,9 +364,9 @@ const JobForm: React.FC = () => {
                 </div>
               </div>
             </Card>
-            
-            <Card 
-              title="Services" 
+
+            <Card
+              title="Services"
               footer={
                 <Button
                   type="button"
@@ -307,77 +380,106 @@ const JobForm: React.FC = () => {
                 </Button>
               }
             >
+
               {selectedServices?.length === 0 ? (
                 <div className="text-center py-4 text-gray-500">
                   No services added yet. Click "Add Service" to begin.
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {selectedServices?.map((service, index) => (
-                    <div key={index} className="p-4 border rounded-md bg-gray-50">
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
-                        <div className="sm:col-span-5">
-                          <label htmlFor={`service-${index}`} className="block text-xs font-medium text-gray-700">
-                            Service
-                          </label>
-                          <select
-                            id={`service-${index}`}
-                            value={service.serviceId}
-                            onChange={(e) => handleServiceChange(index, 'serviceId', e.target.value)}
-                            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                          >
-                            {availableServices.map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.name} - {formatCurrency(s.price)}{s.type === 'hourly' ? '/hr' : ''}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        
-                        <div className="sm:col-span-2">
-                          <label htmlFor={`quantity-${index}`} className="block text-xs font-medium text-gray-700">
-                            Quantity
-                          </label>
-                          <input
-                            type="number"
-                            id={`quantity-${index}`}
-                            min="1"
-                            value={service.quantity}
-                            onChange={(e) => handleServiceChange(index, 'quantity', e.target.value)}
-                            className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                          />
-                        </div>
-                        
-                        <div className="sm:col-span-3">
-                          <label className="block text-xs font-medium text-gray-700">
-                            Price
-                          </label>
-                          <div className="mt-1 block w-full py-2 px-3 text-sm font-medium">
-                            {formatCurrency(service.price)}
+                  {selectedServices?.map((service, index) => {
+                    const isOthers = service.serviceId === 'others';
+
+                    return (
+                      <div key={index} className="p-4 border rounded-md bg-gray-50">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+                          <div className="sm:col-span-5">
+                            <label className="block text-xs font-medium text-gray-700">Service</label>
+                            <select
+                              value={service.serviceId}
+                              onChange={(e) => handleServiceChange(index, 'serviceId', e.target.value)}
+                              className="mt-1 block w-full py-2 px-3 border rounded-md shadow-sm sm:text-sm"
+                            >
+                              {availableServices.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.name} - {formatCurrency(s.price)}{s.type === 'hourly' ? '/hr' : ''}
+                                </option>
+                              ))}
+                              <option value="others">Others</option>
+                            </select>
+                          </div>
+
+                          {isOthers && (
+                            <>
+                              <div className="sm:col-span-3">
+                                <label className="block text-xs font-medium text-gray-700">Other Service Name</label>
+                                <input
+                                  type="text"
+                                  value={service.serviceName || ''}
+                                  onChange={(e) => handleServiceChange(index, 'serviceName', e.target.value)}
+                                  className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
+                                  placeholder="Custom service"
+                                />
+                              </div>
+
+                              <div className="sm:col-span-2">
+                                <label className="block text-xs font-medium text-gray-700">Price</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={service.price}
+                                  onChange={(e) => handleServiceChange(index, 'price', e.target.value)}
+                                  className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {!isOthers && (
+                            <div className="sm:col-span-3">
+                              <label className="block text-xs font-medium text-gray-700">Price</label>
+                              <div className="mt-1 block w-full py-2 px-3 text-sm font-medium">
+                                {formatCurrency(service.price)}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-medium text-gray-700">Quantity</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={service.quantity}
+                              onChange={(e) => handleServiceChange(index, 'quantity', e.target.value)}
+                              className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2 flex items-end">
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="sm"
+                              icon={Trash2}
+                              onClick={() => removeServiceFromJob(index)}
+                              className="w-full"
+                            >
+                              Remove
+                            </Button>
                           </div>
                         </div>
-                        
-                        <div className="sm:col-span-2 flex items-end">
-                          <Button
-                            type="button"
-                            variant="danger"
-                            size="sm"
-                            icon={Trash2}
-                            onClick={() => removeServiceFromJob(index)}
-                            className="w-full"
-                          >
-                            Remove
-                          </Button>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+
                 </div>
+
+
               )}
             </Card>
-            
-            <Card 
-              title="Consumables Used" 
+
+            <Card
+              title="Consumables Used"
               footer={
                 <Button
                   type="button"
@@ -397,70 +499,95 @@ const JobForm: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {selectedConsumables.map((consumable, index) => (
-                    <div key={index} className="p-4 border rounded-md bg-gray-50">
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
-                        <div className="sm:col-span-6">
-                          <label htmlFor={`consumable-${index}`} className="block text-xs font-medium text-gray-700">
-                            Item
-                          </label>
-                          <select
-                            id={`consumable-${index}`}
-                            value={consumable.itemId}
-                            onChange={(e) => handleConsumableChange(index, 'itemId', e.target.value)}
-                            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                          >
-                            {availableInventory.map((item) => (
-                              <option key={item.id} value={item.id}>
-                                {item.itemName} (Available: {item.quantity} {item.unit})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        
-                        <div className="sm:col-span-2">
-                          <label htmlFor={`consumable-quantity-${index}`} className="block text-xs font-medium text-gray-700">
-                            Quantity Used
-                          </label>
-                          <input
-                            type="number"
-                            id={`consumable-quantity-${index}`}
-                            min="0.1"
-                            step="0.1"
-                            value={consumable.quantityUsed}
-                            onChange={(e) => handleConsumableChange(index, 'quantityUsed', e.target.value)}
-                            className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                          />
-                        </div>
-                        
-                        <div className="sm:col-span-2">
-                          <label className="block text-xs font-medium text-gray-700">
-                            Unit
-                          </label>
-                          <div className="mt-1 block w-full py-2 px-3 text-sm">
-                            {consumable.unit}
+                  {selectedConsumables.map((consumable, index) => {
+                    const isOthers = consumable.itemId === 'others';
+
+                    return (
+                      <div key={index} className="p-4 border rounded-md bg-gray-50">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+                          <div className="sm:col-span-6">
+                            <label className="block text-xs font-medium text-gray-700">Item</label>
+                            <select
+                              value={consumable.itemId}
+                              onChange={(e) => handleConsumableChange(index, 'itemId', e.target.value)}
+                              className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            >
+                              {availableInventory.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                  {item.itemName} (Available: {item.quantity} {item.unit})
+                                </option>
+                              ))}
+                              <option value="others">Others</option>
+                            </select>
+                          </div>
+
+                          {isOthers && (
+                            <>
+                              <div className="sm:col-span-3">
+                                <label className="block text-xs font-medium text-gray-700">Other Item Name</label>
+                                <input
+                                  type="text"
+                                  value={consumable.itemName}
+                                  onChange={(e) => handleConsumableChange(index, 'itemName', e.target.value)}
+                                  className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
+                                  placeholder="Custom name"
+                                />
+                              </div>
+                              <div className="sm:col-span-3">
+                                <label className="block text-xs font-medium text-gray-700">Unit</label>
+                                <input
+                                  type="text"
+                                  value={consumable.unit}
+                                  onChange={(e) => handleConsumableChange(index, 'unit', e.target.value)}
+                                  className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
+                                  placeholder="e.g., Litre, Piece"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-medium text-gray-700">Quantity Used</label>
+                            <input
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={consumable.quantityUsed}
+                              onChange={(e) => handleConsumableChange(index, 'quantityUsed', e.target.value)}
+                              className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
+                            />
+                          </div>
+
+                          {!isOthers && (
+                            <div className="sm:col-span-2">
+                              <label className="block text-xs font-medium text-gray-700">Unit</label>
+                              <div className="mt-1 block w-full py-2 px-3 text-sm">
+                                {consumable.unit}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="sm:col-span-2 flex items-end">
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="sm"
+                              icon={Trash2}
+                              onClick={() => removeConsumableFromJob(index)}
+                              className="w-full"
+                            >
+                              Remove
+                            </Button>
                           </div>
                         </div>
-                        
-                        <div className="sm:col-span-2 flex items-end">
-                          <Button
-                            type="button"
-                            variant="danger"
-                            size="sm"
-                            icon={Trash2}
-                            onClick={() => removeConsumableFromJob(index)}
-                            className="w-full"
-                          >
-                            Remove
-                          </Button>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+
                 </div>
               )}
             </Card>
-            
+
             <Card title="Additional Information">
               <div className="space-y-4">
                 <div>
@@ -480,7 +607,7 @@ const JobForm: React.FC = () => {
               </div>
             </Card>
           </div>
-          
+
           <div className="space-y-6">
             <Card title="Payment Details">
               <div className="space-y-4">
@@ -501,15 +628,42 @@ const JobForm: React.FC = () => {
                     <option value="check">Check</option>
                   </select>
                 </div>
-                
+
+                {formData.paymentType !== 'cash' && (
+                  <div>
+                    <label htmlFor="tax" className="block text-sm font-medium text-gray-700">
+                      Tax ({user?.role === 'admin' ? 'editable' : 'readonly'})
+                    </label>
+                    <input
+                      type="number"
+                      name="tax"
+                      id="tax"
+                      min="0"
+                      step="0.01"
+                      value={formData.tax}
+                      onChange={handleInputChange}
+                      disabled={user?.role !== 'admin'}
+                      className={`mt-1 block w-full shadow-sm sm:text-sm rounded-md ${user?.role === 'admin'
+                          ? 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                          : 'bg-gray-100 border-gray-200 cursor-not-allowed'
+                        }`}
+                    />
+                  </div>
+                )}
+
                 <div className="pt-4 border-t border-gray-200">
                   <div className="flex justify-between text-sm">
                     <span className="font-medium text-gray-700">Subtotal</span>
-                    <span className="text-gray-900">
-                      {formatCurrency(calculateTotal())}
-                      </span>
+                    <span className="text-gray-900">{formatCurrency(
+                      selectedServices.reduce((total, service) => total + (service.price * service.quantity), 0)
+                    )}</span>
                   </div>
-                  
+                  {formData.paymentType !== 'cash' && (
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium text-gray-700">Tax</span>
+                      <span className="text-gray-900">{formatCurrency(formData.tax)}</span>
+                    </div>
+                  )}
                   <div className="mt-4 flex justify-between text-base">
                     <span className="font-medium text-gray-900">Total</span>
                     <span className="font-bold text-gray-900">{formatCurrency(calculateTotal())}</span>
@@ -517,7 +671,43 @@ const JobForm: React.FC = () => {
                 </div>
               </div>
             </Card>
-            
+
+            {/* <Card title="Payment Details">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="paymentType" className="block text-sm font-medium text-gray-700">
+                    Payment Type *
+                  </label>
+                  <select
+                    id="paymentType"
+                    name="paymentType"
+                    value={formData.paymentType}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="transfer">Bank Transfer</option>
+                    <option value="check">Check</option>
+                  </select>
+                </div>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium text-gray-700">Subtotal</span>
+                    <span className="text-gray-900">
+                      {formatCurrency(calculateTotal())}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex justify-between text-base">
+                    <span className="font-medium text-gray-900">Total</span>
+                    <span className="font-bold text-gray-900">{formatCurrency(calculateTotal())}</span>
+                  </div>
+                </div>
+              </div>
+            </Card> */}
+
             <div className="flex flex-col space-y-3">
               <Button
                 type="submit"
@@ -530,7 +720,7 @@ const JobForm: React.FC = () => {
               >
                 {isEditing ? 'Update Job' : 'Create Job'}
               </Button>
-              
+
               <Button
                 type="button"
                 variant="secondary"
