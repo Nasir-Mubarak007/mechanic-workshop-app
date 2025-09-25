@@ -1,21 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { 
-  getInventoryItems, 
-  getLowStockItems, 
-  addInventoryItem, 
-  updateInventoryItem, 
-  restockInventoryItem 
-} from '../utils/localStorage';
+import { fetchInventoryItems, fetchLowStockItems, addInventoryItem, updateInventoryItem, restockInventoryItem } from '../api/inventory';
 import { InventoryItem } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { Package, Plus, Edit, RefreshCw, Search, Filter, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
-
 const Inventory: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([]);
   const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
@@ -49,40 +42,52 @@ const Inventory: React.FC = () => {
       loadInventory();
     }
   }, [isAdmin]);
+  
 
   useEffect(() => {
     applyFilters();
   }, [inventoryItems, filters]);
 
-  const loadInventory = () => {
-    const items = getInventoryItems();
-    const lowStock = getLowStockItems();
-    setInventoryItems(items);
-    setLowStockItems(lowStock);
+
+  const loadInventory = async () => {
+    try {
+      const [itemsRes, lowStockRes] = await Promise.all([
+        fetchInventoryItems(),
+        fetchLowStockItems(),
+      ]);
+
+      if (Array.isArray(itemsRes.data) && Array.isArray(lowStockRes.data)) {
+        setInventoryItems(itemsRes.data);
+        setLowStockItems(lowStockRes.data);
+      } else {
+        throw new Error('Unexpected API response format');
+      }
+    } catch (error: any) {
+      console.error('Error loading inventory:', error);
+      toast.error(error?.message || 'Failed to load inventory');
+    }
   };
+
 
   const applyFilters = () => {
     let filtered = [...inventoryItems];
-    
-    // Search filter
+
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.itemName.toLowerCase().includes(searchLower) ||
         item.category.toLowerCase().includes(searchLower)
       );
     }
-    
-    // Category filter
+
     if (filters.category) {
       filtered = filtered.filter(item => item.category === filters.category);
     }
-    
-    // Low stock filter
+
     if (filters.lowStockOnly) {
       filtered = filtered.filter(item => item.quantity <= item.threshold);
     }
-    
+
     setFilteredItems(filtered);
   };
 
@@ -134,59 +139,36 @@ const Inventory: React.FC = () => {
     setIsRestockModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
       if (editingItem) {
-        // Update existing item
-        updateInventoryItem({
-          ...editingItem,
-          itemName: formData.itemName,
-          category: formData.category,
-          quantity: formData.quantity,
-          unit: formData.unit,
-          threshold: formData.threshold,
-          pricePerUnit: formData.pricePerUnit,
-        });
+        await updateInventoryItem(editingItem._id, formData);
         toast.success('Inventory item updated successfully');
       } else {
-        // Add new item
-        addInventoryItem({
-          itemName: formData.itemName,
-          category: formData.category,
-          quantity: formData.quantity,
-          unit: formData.unit,
-          threshold: formData.threshold,
-          pricePerUnit: formData.pricePerUnit,
-        });
+        await addInventoryItem(formData);
         toast.success('Inventory item added successfully');
       }
-      
       setIsModalOpen(false);
       loadInventory();
-    } catch (error) {
-      toast.error('Failed to save inventory item');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to save inventory item');
     }
   };
 
-  const handleRestockSubmit = (e: React.FormEvent) => {
+  const handleRestockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!restockingItem || restockAmount <= 0) {
       toast.error('Please enter a valid restock amount');
       return;
     }
-    
     try {
-      restockInventoryItem(restockingItem.id, restockAmount);
-      toast.success(`Successfully restocked ${restockingItem.itemName}`);
+      await restockInventoryItem(restockingItem._id, restockAmount);
+      toast.success(`Restocked ${restockingItem.itemName}`);
       setIsRestockModalOpen(false);
-      setRestockingItem(null);
-      setRestockAmount(0);
       loadInventory();
-    } catch (error) {
-      toast.error('Failed to restock item');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to restock item');
     }
   };
 
@@ -215,7 +197,7 @@ const Inventory: React.FC = () => {
   };
 
   if (!isAdmin) {
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/jobs" />;
   }
 
   return (
@@ -339,7 +321,7 @@ const Inventory: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredItems.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.itemName}
                   </td>

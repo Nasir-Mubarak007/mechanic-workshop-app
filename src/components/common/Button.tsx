@@ -2,11 +2,13 @@ import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'ghost';
+type Color = "primary" | "secondary" | "success" | "danger";
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  color?:Color;
   icon?: LucideIcon;
   iconPosition?: 'left' | 'right';
   isLoading?: boolean;
@@ -18,6 +20,7 @@ const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   icon: Icon,
+  color = 'primary',
   iconPosition = 'left',
   isLoading = false,
   fullWidth = false,
@@ -36,6 +39,16 @@ const Button: React.FC<ButtonProps> = ({
     warning: 'bg-amber-500 hover:bg-amber-600 text-white focus:ring-amber-500',
     ghost: 'bg-transparent hover:bg-red-50 text-red-700 focus:ring-red-500',
   };
+
+  const ghostColors: Record<Color, string> = {
+    primary: "text-blue-600 hover:bg-blue-50",
+    secondary: "text-gray-600 hover:bg-gray-50",
+    success: "text-green-600 hover:bg-green-50",
+    danger: "text-red-600 hover:bg-red-50",
+  };
+
+  const variantClasses =
+    variant === "ghost" ? ghostColors[color] : variantStyles[variant];
   
   const sizeStyles = {
     sm: 'text-xs px-2.5 py-1.5',
@@ -50,7 +63,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       className={`
         ${baseStyles}
-        ${variantStyles[variant]}
+        ${variantClasses}
         ${sizeStyles[size]}
         ${widthStyle}
         ${disabledStyle}
