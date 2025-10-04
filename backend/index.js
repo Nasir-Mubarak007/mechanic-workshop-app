@@ -13,7 +13,7 @@ const app = express();
 const corsOptions = {
   origin: [
     'http://localhost:5173',
-    'https://vicky-auto-store.vercel.app'
+    'https://vicky-auto-services.vercel.app'
   ],
   credentials: true,
 };
