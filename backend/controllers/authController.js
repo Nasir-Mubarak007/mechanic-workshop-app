@@ -24,18 +24,18 @@ exports.login = async (req, res) => {
     }
 
     // Generate JWT
-    const token = jwt.sign(
-      { id: user._id, role: user.role, username: user.username },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
+    // const token = jwt.sign(
+    //   { id: user._id, role: user.role, username: user.username },
+    //   JWT_SECRET,
+    //   { expiresIn: JWT_EXPIRES_IN }
+    // );
 
     // Send as HTTP-only cookie
     res
       .cookie('token', token, {
         httpOnly: true,
-        secure: false, // set to true in production with HTTPS
-        sameSite: 'lax',
+        secure: true, // set to true in production with HTTPS
+        sameSite: 'none', // or 'lax' if same-site
         maxAge: 5 * 24 * 60 * 60 * 1000 // 7 days
       })
       .json({
@@ -58,11 +58,11 @@ exports.logout = (req, res) => {
   console.log('Logging out user:', req.user ? req.user.username : 'Unknown user');
   res.clearCookie('token', {
     httpOnly: true,
-    sameSite: 'lax', // or 'none' if using cross-origin
-    secure: false, // set to true in production with HTTPS
+    sameSite: 'none', // or 'none' if using cross-origin
+    secure: true, // set to true in production with HTTPS
     // maxAge: 0, // Optional: set maxAge to 0 to immediately expire the cookie
     // Uncomment the line below if you want to set secure cookies in production
-    // secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production',
   });
   return res.status(200).json({ message: 'Logged out successfully' });
 }
