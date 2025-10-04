@@ -11,7 +11,10 @@ const app = express();
 
 // ✅ Use this **at the very top**, before any routes
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'https://vicky-auto-store.vercel.app'
+  ],
   credentials: true,
 };
 
