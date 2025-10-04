@@ -26,6 +26,19 @@ exports.getJobsByDate = async (req, res) => {
   res.json(jobs);
 };
 
+// Get job by ID
+exports.getJobById = async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id).populate('consumables.inventoryItem');
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    res.json(job);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch job' });
+  }
+};
+
 // Create new job with inventory deduction
 exports.addJob = async (req, res) => {
   const { consumables = [] } = req.body;

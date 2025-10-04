@@ -1,18 +1,4 @@
-// import React, { useState, useEffect } from 'react';
-// import { useNavigate, useParams } from 'react-router-dom';
-// import { useAuth } from '../context/AuthContext';
-// import {
-//   getActiveServices,
-//   addJob,
-//   getJobs,
-//   updateJob,
-//   getAvailableInventoryItems
-// } from '../utils/localStorage';
-// import { Service, Job, JobService, JobConsumable, PaymentType, InventoryItem } from '../types';
-// import Card from '../components/common/Card';
-// import Button from '../components/common/Button';
-// import { Save, Plus, Trash2, ArrowLeft } from 'lucide-react';
-// import toast from 'react-hot-toast';
+
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -57,41 +43,6 @@ const JobForm: React.FC = () => {
   });
 
 
-  // type jobStatus= "scheduled" | "pending" | "in-progress" | "completed" | "cancelled" | "scheduled";
-
-
-  // useEffect(() => {
-  //   // Load available services and inventory
-  //   const services = fetchActiveServices();
-  //   const inventory = fetchAvailableItems();
-  //   setAvailableServices(services);
-  //   setAvailableInventory(inventory);
-
-  //   // If editing, load job data
-  //   if (isEditing && id) {
-  //     const jobs = getJobs();
-  //     const job = jobs.find(j => j.id === id);
-
-  //     if (job) {
-  //       setFormData({
-  //         customerName: job.customerName,
-  //         vehicle: job.vehicle,
-  //         paymentType: job.paymentType,
-  //         notes: job.notes || '',
-  //         othersServiceName: formData.othersServiceName || '',
-  //         othersServicePrice: formData.othersServicePrice || '',
-  //         tax: job.tax ?? 0,
-  //       });
-
-  //       setSelectedServices(job.services || []);
-  //       setSelectedConsumables(job.consumables || []);
-  //     } else {
-  //       toast.error('Job not found');
-  //       navigate('/jobs');
-  //     }
-  //   }
-  // }, [id, isEditing, navigate]);
-
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -103,13 +54,14 @@ const JobForm: React.FC = () => {
         setAvailableInventory(inventoryRes.data);
 
         if (isEditing && id) {
-          let jobRes;
+          let jobs: Job[];
           if (user?.role === 'admin') {
-            jobRes = await fetchJobs();
+            jobs = await fetchJobs();
           } else {
-            jobRes = await fetchJobsByStaff(user!._id);
+            jobs = await fetchJobsByStaff(user!._id);
           }
-          const job = jobRes.data.find((j: Job) => j._id === id);
+
+          const job = jobs.find((j: Job) => j._id === id);
           if (job) {
             setFormData({
               customerName: job.customerName,
@@ -128,6 +80,7 @@ const JobForm: React.FC = () => {
             navigate('/jobs');
           }
         }
+
       } catch {
         toast.error('Failed to load form data');
       }
@@ -164,31 +117,6 @@ const JobForm: React.FC = () => {
     setSelectedServices(updatedServices);
   };
 
-  // const handleServiceChange = (index: number, field: keyof JobService, value: string | number) => {
-  //   const updatedServices = [...selectedServices];
-
-  //   if (field === 'serviceId') {
-  //     const selectedService = availableServices.find(s => s.id === value);
-  //     if (selectedService) {
-  //       updatedServices[index] = {
-  //         ...updatedServices[index],
-  //         serviceId: selectedService.id,
-  //         serviceName: selectedService.name,
-  //         price: selectedService.price,
-  //       };
-  //     }
-  //   }
-
-  //   else {
-  //     updatedServices[index] = {
-  //       ...updatedServices[index],
-  //       [field]: field === 'quantity' ? Math.max(1, Number(value)) : value,
-  //     };
-  //   }
-
-
-  //   setSelectedServices(updatedServices);
-  // };
 
   const handleServiceChange = (index: number, field: keyof JobService, value: string | number) => {
     const updatedServices = [...selectedServices];
@@ -259,110 +187,6 @@ const JobForm: React.FC = () => {
     setSelectedConsumables(updatedConsumables);
   };
 
-
-
-  // const handleConsumableChange = (
-  //   index: number,
-  //   field: keyof JobConsumable,
-  //   value: string | number
-  // ) => {
-  //   const updatedConsumables = [...selectedConsumables];
-
-  //   if (field === 'itemId') {
-  //     if (value === 'others') {
-  //       // Explicitly set the 'others' flag and clear itemName/unit for custom input.
-  //       updatedConsumables[index] = {
-  //         ...updatedConsumables[index],
-  //         itemId: 'others',
-  //         itemName: '', // Allow the user to enter a custom name
-  //         unit: '',     // Allow the user to specify the unit
-  //         quantityUsed: 1,
-  //       };
-  //     } else {
-  //       const selectedItem = availableInventory.find(i => i.id === value);
-  //       if (selectedItem) {
-  //         updatedConsumables[index] = {
-  //           ...updatedConsumables[index],
-  //           itemId: selectedItem.id,
-  //           itemName: selectedItem.itemName,
-  //           unit: selectedItem.unit,
-  //           quantityUsed: 1,
-  //         };
-  //       }
-  //     }
-  //   } else {
-  //     updatedConsumables[index] = {
-  //       ...updatedConsumables[index],
-  //       // Ensure numeric fields are handled as numbers:
-  //       [field]:
-  //         field === 'quantityUsed'
-  //           ? Math.max(0.1, Number(value))
-  //           : value,
-  //     };
-  //   }
-
-  //   setSelectedConsumables(updatedConsumables);
-  // };
-
-
-  // const validateConsumables = (): boolean => {
-  //   let hasOthers = false;
-
-  //   for (const consumable of selectedConsumables) {
-  //     const isOthers = consumable.itemId === 'others';
-
-  //     if (isOthers) {
-  //       hasOthers = true;
-
-  //       // Validate required fields for 'others'
-  //       if (!consumable.itemName?.trim() || consumable.itemName.toLowerCase() === 'others') {
-  //         toast.error('Please provide a valid name for the "Other" consumable.');
-  //         return false;
-  //       }
-
-  //       if (!consumable.unit?.trim()) {
-  //         toast.error(`Please specify a unit for "${consumable.itemName}".`);
-  //         return false;
-  //       }
-
-  //       // Optional logging
-  //       console.log('[AUDIT] Other consumable used:', {
-  //         name: consumable.itemName,
-  //         quantity: consumable.quantityUsed,
-  //         unit: consumable.unit,
-  //       });
-
-  //       continue;
-  //     }
-
-  //     const inventoryItem = availableInventory.find(i => i.id === consumable.itemId);
-  //     if (!inventoryItem) {
-  //       toast.error(`Inventory item not found: ${consumable.itemName}`);
-  //       return false;
-  //     }
-
-  //     if (inventoryItem.quantity < consumable.quantityUsed) {
-  //       toast.error(`Insufficient quantity for ${consumable.itemName}. Available: ${inventoryItem.quantity} ${inventoryItem.unit}, Required: ${consumable.quantityUsed} ${consumable.unit}`);
-  //       return false;
-  //     }
-  //   }
-
-  //   if (hasOthers) {
-  //     toast((t) => (
-  //       <span>
-  //         You're using <strong>"Other"</strong> consumables that won't affect inventory.
-  //         <button
-  //           onClick={() => toast.dismiss(t.id)}
-  //           className="ml-2 text-blue-600 underline"
-  //         >
-  //           OK
-  //         </button>
-  //       </span>
-  //     ), { icon: '⚠️' });
-  //   }
-
-  //   return true;
-  // };
 
   const validateConsumables = (): boolean => {
     for (const consumable of selectedConsumables) {
@@ -457,78 +281,6 @@ const JobForm: React.FC = () => {
   }
 };
 
-
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-
-  //   if (!user) {
-  //     toast.error('You must be logged in to perform this action');
-  //     return;
-  //   }
-
-  //   if (selectedServices.length === 0) {
-  //     toast.error('You must add at least one service');
-  //     return;
-  //   }
-
-  //   // Validate consumables only for new jobs (not when editing)
-  //   if (!isEditing && selectedConsumables.length > 0 && !validateConsumables()) {
-  //     return;
-  //   }
-
-  //   setLoading(true);
-
-  //   try {
-  //     const jobData: Omit<Job, '_id'> = {
-  //       customerName: formData.customerName,
-  //       phoneNumber: formData.phoneNumber || "", // add this field in your form
-  //       carDetails: formData.vehicle, // backend wants this name
-  //       services: selectedServices.map(s => ({
-  //         serviceId: s.serviceId,
-  //         serviceName: s.serviceName,
-  //         price: s.price,
-  //         quantity: s.quantity,
-  //         isCustom: s.serviceId === 'others'
-  //       })),
-  //       consumables: selectedConsumables.map(c => ({
-  //         itemId: c.itemId,         // or c.inventoryItem if that's the id
-  //         itemName: c.itemName,     // make sure this is available in your data
-  //         unit: c.unit,             // make sure this is available in your data
-  //         quantityUsed: c.quantityUsed,
-  //       })),
-  //       totalPrice: calculateTotal(),
-  //       paymentType: formData.paymentType,
-  //       status: "scheduled", // default
-  //       scheduledDate: new Date().toISOString(), // optional, but good to send
-  //       // scheduledTime: new Date().toLocaleDateString(), // optional, but good to send
-  //       notes: formData.notes,
-  //       assignedTo: user._id, // backend uses this, not staffId
-  //       date:'',
-  //       staffName: user.name || user.username || 'Unknown Staff',
-  //     };
-
-  //     if (isEditing && id) {
-  //       // updateJob({ id, ...jobData });
-  //       toast.success('Job updated successfully');
-  //     } else {
-  //         console.log('Job',jobData);
-  //         addJob(jobData);
-  //         toast.success('Job created successfully');
-        
-  //     }
-
-  //     navigate('/jobs');
-  //   } catch (error) {
-  //     if (error instanceof Error) {
-  //       toast.error(error.message);
-  //     } else {
-  //       toast.error('Failed to save job');
-  //     }
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -726,91 +478,7 @@ const JobForm: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* {selectedConsumables.map((consumable, index) => {
-                    const isOthers = consumable.itemId === 'others';
-
-                    return (
-                      <div key={index} className="p-4 border rounded-md bg-gray-50">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
-                          <div className="sm:col-span-6">
-                            <label className="block text-xs font-medium text-gray-700">Item</label>
-                            <select
-                              value={consumable.itemId}
-                              onChange={(e) => handleConsumableChange(index, 'itemId', e.target.value)}
-                              className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                            >
-                              {availableInventory.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                  {item.itemName} (Available: {item.quantity} {item.unit})
-                                </option>
-                              ))}
-                              <option value="others">Others</option>
-                            </select>
-                          </div>
-
-                          {isOthers && (
-                            <>
-                              <div className="sm:col-span-3">
-                                <label className="block text-xs font-medium text-gray-700">Other Item Name</label>
-                                <input
-                                  type="text"
-                                  value={consumable.itemName}
-                                  onChange={(e) => handleConsumableChange(index, 'itemName', e.target.value)}
-                                  className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
-                                  placeholder="Custom name"
-                                />
-                              </div>
-                              <div className="sm:col-span-3">
-                                <label className="block text-xs font-medium text-gray-700">Unit</label>
-                                <input
-                                  type="text"
-                                  value={consumable.unit}
-                                  onChange={(e) => handleConsumableChange(index, 'unit', e.target.value)}
-                                  className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
-                                  placeholder="e.g., Litre, Piece"
-                                />
-                              </div>
-                            </>
-                          )}
-
-                          <div className="sm:col-span-2">
-                            <label className="block text-xs font-medium text-gray-700">Quantity Used</label>
-                            <input
-                              type="number"
-                              min="0.1"
-                              step="0.1"
-                              value={consumable.quantityUsed}
-                              onChange={(e) => handleConsumableChange(index, 'quantityUsed', e.target.value)}
-                              className="mt-1 block w-full border rounded-md shadow-sm sm:text-sm"
-                            />
-                          </div>
-
-                          {!isOthers && (
-                            <div className="sm:col-span-2">
-                              <label className="block text-xs font-medium text-gray-700">Unit</label>
-                              <div className="mt-1 block w-full py-2 px-3 text-sm">
-                                {consumable.unit}
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="sm:col-span-2 flex items-end">
-                            <Button
-                              type="button"
-                              variant="danger"
-                              size="sm"
-                              icon={Trash2}
-                              onClick={() => removeConsumableFromJob(index)}
-                              className="w-full"
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })} */}
-
+                 
                   {selectedConsumables.map((consumable, index) => (
                     <div key={index} className="p-4 border rounded-md bg-gray-50">
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
