@@ -8,12 +8,13 @@ dotenv.config();
 connectDB();
 
 const app = express();
+app.use(cookieParser());
 
 // ✅ Use this **at the very top**, before any routes
 const corsOptions = {
   origin: [
-    'http://localhost:5173',
-    'https://vicky-auto-services.vercel.app'
+    'https://vicky-auto-services.vercel.app',
+    'http://localhost:5173'
   ],
   credentials: true,
 };
@@ -25,7 +26,6 @@ app.use(cors(corsOptions));
 // ✅ Middleware to parse JSON and cookies
 // This is necessary for handling JSON requests and cookies in the backend
 app.use(express.json());
-app.use(cookieParser());
 
 app.options(/^\/.*$/, cors(corsOptions));
 
