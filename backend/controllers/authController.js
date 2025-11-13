@@ -17,7 +17,7 @@ const JWT_EXPIRES_IN = '5d';
 //     }
 
 //     // Check password
-//     const isMatch = await bcrypt.compare(password, user.password);
+//     const isMatch = bcrypt.compare(password, user.password);
 //     if (!isMatch) {
 //       console.log('❌ Password mismatch for user:', username);
 //       return res.status(401).json({ message: 'Invalid credentials' });
@@ -57,34 +57,34 @@ exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // 1️⃣ Find the user
+    // Check if user exists
     const user = await User.findOne({ username });
     if (!user || !user.isActive) {
       console.log('❌ No user found for username:', username);
       return res.status(401).json({ message: 'Invalid credentials or inactive user' });
     }
 
-    // 2️⃣ Check password (await is critical!)
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Check password
+    const isMatch = bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log('❌ Password mismatch for user:', username);
-      return res.status(401).json({ message: 'Wrong password!' });
+      return res.status(401).json({ message: `wrong password!` });
     }
 
-    // 3️⃣ Generate JWT
+    // Generate JWT
     const token = jwt.sign(
       { id: user._id, role: user.role, username: user.username },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    // 4️⃣ Send secure HTTP-only cookie
+    // Send as HTTP-only cookie
     res
       .cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // true on Render
-        sameSite: 'none', // required for cross-site (Vercel → Render)
-        maxAge: 5 * 24 * 60 * 60 * 1000, // 5 days
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        maxAge: 5 * 24 * 60 * 60 * 1000 // 5 days
       })
       .json({
         message: 'Login successful',
@@ -92,11 +92,11 @@ exports.login = async (req, res) => {
           _id: user._id,
           name: user.name,
           role: user.role,
-          isActive: user.isActive,
-        },
+          isActive: user.isActive
+        }
       });
   } catch (err) {
-    console.error('Login failed:', err);
+    console.error('Login failed:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
