@@ -6,11 +6,17 @@ import Header from './Header';
 import { Toaster } from 'react-hot-toast';
 import { Plus, CalendarPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Spinner from '../common/Spinner';
 
 const Layout: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const {user, isAuthenticated, loading } = useAuth();
 
-  if (isLoading) {
+  if (!user) return <Spinner />; // or a placeholder
+
+  console.warn('User logged in', user);
+  
+  
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="w-16 h-16 border-4 border-red-700 border-t-transparent rounded-full animate-spin"></div>
@@ -18,8 +24,8 @@ const Layout: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace/>;
   }
 
   return (

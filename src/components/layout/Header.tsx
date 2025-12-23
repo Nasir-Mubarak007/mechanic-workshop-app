@@ -5,26 +5,29 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
 const Header: React.FC = () => {
-  const { user, logout } = useAuth();
+  const {isAdmin, user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isAdmin } = useAuth();
+
+
 
   const getPageTitle = () => {
     const path = location.pathname;
 
     
-    if (path === '/dashboard') return 'Dashboard';
+    // if (path === '/dashboard') return 'Dashboard';
     if (path === '/services') return 'Services Management';
     if (path === '/jobs') return 'Job Logs';
     if (path === '/schedule') return 'Schedule Service';
-    if (path === '/calendar') return 'Service Calendar';
+    // if (path === '/calendar') return 'Service Calendar';
     if (path === '/inventory') return 'Inventory Management';
     if (path === '/reports') return 'Reports & Summaries';
     if (path === '/settings') return 'Settings';
     
     return 'Workshop Management';
   };
+
+  if (!user) return null; // or a placeholder
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -58,7 +61,9 @@ const Header: React.FC = () => {
             </NavLink>
           </li>
           
-          {isAdmin && (
+          {
+          isAdmin &&
+           (
             <li>
               <NavLink 
                 to="/services" 
@@ -92,7 +97,7 @@ const Header: React.FC = () => {
             </NavLink>
           </li>
           
-          <li>
+          {/* <li>
             <NavLink 
               to="/schedule" 
               className={({ isActive }) => 
@@ -106,9 +111,9 @@ const Header: React.FC = () => {
               <CalendarPlus size={20} className="mr-3" />
               Schedule Service
             </NavLink>
-          </li>
+          </li> */}
           
-          <li>
+          {/* <li>
             <NavLink 
               to="/calendar" 
               className={({ isActive }) => 
@@ -122,9 +127,10 @@ const Header: React.FC = () => {
               <Calendar size={20} className="mr-3" />
               Service Calendar
             </NavLink>
-          </li>
+          </li> */}
           
-          {isAdmin && (
+          {
+          // isAdmin && (
             <li>
               <NavLink 
                 to="/inventory" 
@@ -140,9 +146,12 @@ const Header: React.FC = () => {
                 Inventory
               </NavLink>
             </li>
-          )}
+          // )
+          }
           
-          {isAdmin && (
+          {
+          // isAdmin &&
+           (
             <li>
               <NavLink 
                 to="/reports" 
@@ -160,7 +169,9 @@ const Header: React.FC = () => {
             </li>
           )}
           
-          {isAdmin && (
+          {
+          // isAdmin && 
+          (
             <li>
               <NavLink 
                 to="/settings" 

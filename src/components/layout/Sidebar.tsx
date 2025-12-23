@@ -13,7 +13,12 @@ import {
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
+
+  if (!isAuthenticated || !user) return null; // or a placeholder
+
+  console.log(user);
+  
 
   return (
     <aside className="hidden lg:flex w-64 flex-col h-full bg-red-900 text-white">
@@ -40,7 +45,9 @@ const Sidebar: React.FC = () => {
             </NavLink>
           </li>
           
-          {isAdmin && (
+          {
+          isAdmin && 
+          (
             <li>
               <NavLink 
                 to="/services" 
@@ -102,7 +109,9 @@ const Sidebar: React.FC = () => {
             </NavLink>
           </li>
           
-          {isAdmin && (
+          {
+          isAdmin && 
+          (
             <li>
               <NavLink 
                 to="/inventory" 
@@ -119,7 +128,9 @@ const Sidebar: React.FC = () => {
             </li>
           )}
           
-          {isAdmin && (
+          {
+          isAdmin && 
+          (
             <li>
               <NavLink 
                 to="/reports" 
@@ -136,7 +147,9 @@ const Sidebar: React.FC = () => {
             </li>
           )}
           
-          {isAdmin && (
+          {
+          isAdmin && 
+          (
             <li>
               <NavLink 
                 to="/settings" 
@@ -155,7 +168,7 @@ const Sidebar: React.FC = () => {
         </ul>
       </nav>
       <div className="p-4 text-xs text-red-200 border-t border-red-800">
-        MechShop Pro v1.0.0
+        Vicky Auto Services v1.0.0
       </div>
     </aside>
   );

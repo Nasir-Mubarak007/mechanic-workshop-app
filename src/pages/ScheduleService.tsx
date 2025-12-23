@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getActiveServices, addScheduledService } from '../utils/localStorage';
+// import { getActiveServices, addScheduledService } from '../utils/localStorage';
+import { fetchActiveServices, createScheduledService } from '../api/schedule';
+
 import { Service } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -26,19 +28,42 @@ const ScheduleService: React.FC = () => {
     notes: '',
   });
 
-  useEffect(() => {
-    const activeServices = getActiveServices();
-    setServices(activeServices);
+  // useEffect(() => {
+  //   const activeServices = getActiveServices();
+  //   setServices(activeServices);
     
-    // Set default date to tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setFormData(prev => ({
-      ...prev,
-      scheduledDate: format(tomorrow, 'yyyy-MM-dd'),
-      scheduledTime: '09:00',
-    }));
+  //   // Set default date to tomorrow
+  //   const tomorrow = new Date();
+  //   tomorrow.setDate(tomorrow.getDate() + 1);
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     scheduledDate: format(tomorrow, 'yyyy-MM-dd'),
+  //     scheduledTime: '09:00',
+  //   }));
+  // }, []);
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const activeServices = await fetchActiveServices();
+        setServices(activeServices);
+      } catch (err) {
+        toast.error("Failed to load services");
+      }
+
+      // Default date = tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setFormData(prev => ({
+        ...prev,
+        scheduledDate: format(tomorrow, "yyyy-MM-dd"),
+        scheduledTime: "09:00",
+      }));
+    };
+
+    loadServices();
   }, []);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -96,12 +121,16 @@ const ScheduleService: React.FC = () => {
         scheduledDate: `${formData.scheduledDate}T${formData.scheduledTime}:00.000Z`,
         status: 'scheduled' as const,
         notes: formData.notes.trim() || undefined,
-        createdBy: user.id,
+        createdBy: user._id,
         createdByName: user.name,
       };
 
-      addScheduledService(appointmentData);
-      toast.success('Service appointment scheduled successfully!');
+      // addScheduledService(appointmentData);
+      // toast.success('Service appointment scheduled successfully!');
+
+      await createScheduledService(appointmentData);
+      toast.success("Service appointment scheduled successfully!");
+
       
       // Reset form
       setFormData({
@@ -228,7 +257,7 @@ const ScheduleService: React.FC = () => {
                   >
                     <option value="">Select a service</option>
                     {services.map((service) => (
-                      <option key={service.id} value={service.name}>
+                      <option key={service._id} value={service.name}>
                         {service.name} - ${service.price}{service.type === 'hourly' ? '/hr' : ''}
                         {service.estimatedTime && ` (${service.estimatedTime} min)`}
                       </option>

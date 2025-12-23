@@ -1,7 +1,7 @@
 export type UserRole = 'admin' | 'staff';
 
 export interface User {
-  id: string;
+  _id: string;
   username: string;
   password: string; // In a real app, we'd never store passwords in plain text
   name: string;
@@ -11,10 +11,12 @@ export interface User {
   createdAt: string;
 }
 
+export type NewUser = Omit<User, '_id' | 'createdAt'> & { password?: string };
+
 export type ServiceType = 'hourly' | 'fixed' | 'custom';
 
 export interface Service {
-  id: string;
+  _id: string;
   name: string;
   type: ServiceType;
   price: number;
@@ -33,7 +35,7 @@ export interface JobService {
 }
 
 export interface InventoryItem {
-  id: string;
+  _id: string;
   itemName: string;
   category: string;
   quantity: number;
@@ -51,24 +53,26 @@ export interface JobConsumable {
 }
 
 export interface Job {
-  id: string;
+  _id: string;
   customerName: string;
-  vehicle: string;
+  carDetails: string;
+  phoneNumber?: string; // Optional for job creation
   services: JobService[];
   consumables?: JobConsumable[];
+  status: 'pending' | 'in-progress' | 'completed' | 'scheduled' | 'cancelled';
   totalPrice: number;
   paymentType: PaymentType;
-  date: string; // ISO date string
-  staffId: string;
+  assignedTo: string;
   staffName: string;
   notes?: string;
   tax?: number; // Percentage
+  createdAt: string;
 }
 
 export type AppointmentStatus = 'scheduled' | 'completed' | 'missed' | 'cancelled';
 
 export interface ScheduledService {
-  id: string;
+  _id: string;
   customerName: string;
   phoneNumber: string;
   carDetails: string;
